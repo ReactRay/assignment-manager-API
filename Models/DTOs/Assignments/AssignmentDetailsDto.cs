@@ -1,6 +1,7 @@
-﻿namespace StudentTeacherManagment.Models.DTOs.Assignments
+﻿using StudentTeacherManagment.Models.DTOs.Submissions;
+
+namespace StudentTeacherManagment.Models.DTOs.Assignments
 {
-  
     public class AssignmentDetailsDto
     {
         public Guid Id { get; set; }

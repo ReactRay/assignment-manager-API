@@ -144,6 +144,30 @@ namespace StudentTeacherManagment.Controllers
             return Ok(response);
         }
 
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> DeleteAssignment(Guid id)
+        {
+            var teacherId = _userManager.GetUserId(User);
+
+            // Make sure the assignment exists AND belongs to this teacher
+            var assignment = await _assignmentRepository.GetByIdAsync(id);
+
+            if (assignment == null)
+                return NotFound("Assignment not found.");
+
+            if (assignment.TeacherId != teacherId)
+                return Forbid("You can delete only your own assignments.");
+
+            var deleted = await _assignmentRepository.DeleteAsync(id);
+
+            if (!deleted)
+                return StatusCode(500, "Failed to delete assignment.");
+
+            return NoContent(); // 204
+        }
+
+
 
 
 
