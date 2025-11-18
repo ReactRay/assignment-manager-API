@@ -1,4 +1,4 @@
-﻿namespace StudentTeacherManagment.Models.DTO
+﻿namespace StudentTeacherManagment.Models.DTOs.Auth
 {
     public class RegisterDto
     {
