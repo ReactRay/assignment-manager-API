@@ -13,7 +13,7 @@
 
         public Guid AssignmentId { get; set; }
 
-        // 🔽 new
+     
         public string? FileUrl { get; set; }
         public string? FileName { get; set; }
     }

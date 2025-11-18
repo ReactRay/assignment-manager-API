@@ -5,34 +5,38 @@
         public static readonly Dictionary<string, List<string>> PermissionsByRole =
             new()
             {
-                // TEACHER PERMISSIONS
                 ["Teacher"] = new List<string>
                 {
-                    Permissions.CreateAssignment,
-                    Permissions.EditAssignment,
-                    Permissions.DeleteAssignment,
-                    Permissions.GradeAssignment,
-                    Permissions.ViewAssignments,
-                    Permissions.ViewStudentSubmissions
+                    Permissions.Assignments.Create,
+                    Permissions.Assignments.Read,
+                    Permissions.Assignments.Update,
+                    Permissions.Assignments.Delete,
+                    Permissions.Assignments.Grade,
+
+                    Permissions.Submissions.Read,
+                    Permissions.Submissions.Download,
+                    Permissions.Submissions.Grade
                 },
 
-                // STUDENT PERMISSIONS
                 ["Student"] = new List<string>
                 {
-                    Permissions.ViewAssignments,
-                    Permissions.SubmitAssignment
+                    Permissions.Assignments.Read,
+                    Permissions.Submissions.Create,
+                    Permissions.Submissions.Read
                 },
 
-                // ADMIN (BONUS)
                 ["Admin"] = new List<string>
                 {
-                    Permissions.CreateAssignment,
-                    Permissions.EditAssignment,
-                    Permissions.DeleteAssignment,
-                    Permissions.GradeAssignment,
-                    Permissions.ViewAssignments,
-                    Permissions.SubmitAssignment,
-                    Permissions.ViewStudentSubmissions
+                    Permissions.Assignments.Create,
+                    Permissions.Assignments.Read,
+                    Permissions.Assignments.Update,
+                    Permissions.Assignments.Delete,
+                    Permissions.Assignments.Grade,
+
+                    Permissions.Submissions.Create,
+                    Permissions.Submissions.Read,
+                    Permissions.Submissions.Download,
+                    Permissions.Submissions.Grade
                 }
             };
     }

@@ -8,14 +8,19 @@ using StudentTeacherManagment.Repositories.AssignmentRepository;
 using StudentTeacherManagment.Repositories.SubmissionRepository;
 using StudentTeacherManagment.Services;
 using StudentTeacherManagment.Permissions;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ------------------------------------------------------
 // Controllers
+// ------------------------------------------------------
 builder.Services.AddControllers();
 
+// ------------------------------------------------------
 // Swagger + JWT auth
+// ------------------------------------------------------
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -48,39 +53,39 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// ------------------------------------------------------
 // DbContext
+// ------------------------------------------------------
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// ------------------------------------------------------
 // Identity
+// ------------------------------------------------------
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-// ⬇️ Authorization Policies (no stray characters)
+// ------------------------------------------------------
+// Authorization Policies (Permissions)
+// ------------------------------------------------------
 builder.Services.AddAuthorization(options =>
 {
-    foreach (var role in RolePermissions.PermissionsByRole)
+    foreach (var rolePermList in RolePermissions.PermissionsByRole.Values)
     {
-        foreach (var permission in role.Value)
+        foreach (var perm in rolePermList)
         {
-            options.AddPolicy(permission, policy =>
-                policy.RequireRole(role.Key));
+            options.AddPolicy(perm, policy =>
+                policy.RequireClaim("permission", perm));
         }
     }
 });
 
-// JWT Settings
+// ------------------------------------------------------
+// JWT Authentication
+// ------------------------------------------------------
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 
-// Services
-builder.Services.AddScoped<ITokenService, TokenService>();
-
-// Repositories
-builder.Services.AddScoped<IAssignmentRepository, SQLAssignmentRepository>();
-builder.Services.AddScoped<ISubmissionRepository, SQLsubmissionRepository>();
-
-// Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -96,41 +101,81 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtSettings["Key"]))
     };
 });
 
+// ------------------------------------------------------
+// AutoMapper
+// ------------------------------------------------------
 builder.Services.AddAutoMapper(typeof(Program));
+
+// ------------------------------------------------------
+// Repositories & Services
+// ------------------------------------------------------
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAssignmentRepository, SQLAssignmentRepository>();
+builder.Services.AddScoped<ISubmissionRepository, SQLsubmissionRepository>();
 
 var app = builder.Build();
 
+// ------------------------------------------------------
 // Swagger
+// ------------------------------------------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// ------------------------------------------------------
+// Middleware Pipeline
+// ------------------------------------------------------
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseStaticFiles(); // Enable PDF/Uploads serving
 
-// JWT Pipeline
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// ⬇️ Seed roles
+// ------------------------------------------------------
+// Seed roles + permissions
+// ------------------------------------------------------
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
     string[] roles = { "Admin", "Teacher", "Student" };
 
+    // Create roles if missing
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))
         {
             await roleManager.CreateAsync(new IdentityRole(role));
+        }
+    }
+
+    // Assign permissions to each role
+    foreach (var roleEntry in RolePermissions.PermissionsByRole)
+    {
+        var roleName = roleEntry.Key;
+        var permissions = roleEntry.Value;
+
+        var identityRole = await roleManager.FindByNameAsync(roleName);
+        if (identityRole == null) continue;
+
+        var existingClaims = await roleManager.GetClaimsAsync(identityRole);
+
+        foreach (var permission in permissions)
+        {
+            if (!existingClaims.Any(c => c.Type == "permission" && c.Value == permission))
+            {
+                await roleManager.AddClaimAsync(identityRole,
+                    new System.Security.Claims.Claim("permission", permission));
+            }
         }
     }
 }

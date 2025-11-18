@@ -3,10 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using StudentTeacherManagment.Models.Domain;
-using StudentTeacherManagment.Models.DTOs;
 using StudentTeacherManagment.Models.DTOs.Assignments;
+using StudentTeacherManagment.Permissions;
 using StudentTeacherManagment.Repositories.AssignmentRepository;
-using System.Security.Claims;
 
 namespace StudentTeacherManagment.Controllers
 {
@@ -14,165 +13,37 @@ namespace StudentTeacherManagment.Controllers
     [Route("api/[controller]")]
     public class AssignmentsController : ControllerBase
     {
-        private readonly IAssignmentRepository _assignmentRepository;
+        private readonly IAssignmentRepository _repo;
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public AssignmentsController(
-            IAssignmentRepository assignmentRepository,
+            IAssignmentRepository repo,
             IMapper mapper,
             UserManager<ApplicationUser> userManager)
         {
-            _assignmentRepository = assignmentRepository;
+            _repo = repo;
             _mapper = mapper;
             _userManager = userManager;
         }
 
-
-        // POST: api/assignments
+        // CREATE ASSIGNMENT (Teacher/Admin)
+ 
         [HttpPost]
-        [Authorize(Roles = "Teacher")]
-        public async Task<IActionResult> CreateAssignment([FromBody] CreateAssignmentDto assignment)
-        {
-            // Get current teacher id from JWT
-            var teacherId = _userManager.GetUserId(User); // reads NameIdentifier claim
-
-            if (teacherId == null)
-                return Unauthorized("Invalid token");
-
-            // Map DTO -> domain model
-            var domainAssignment = _mapper.Map<Assignment>(assignment);
-            domainAssignment.TeacherId = teacherId;
-
-            // Save via repository
-            domainAssignment = await _assignmentRepository.CreateAsync(domainAssignment);
-
-            var response = _mapper.Map<AssignmentResponseDto>(assignment);
-            return CreatedAtAction(nameof(GetAssignmentById), new { id = domainAssignment.Id }, response);
-        }
-
-
-        [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> GetAllAssignments()
-        {
-            var userId = _userManager.GetUserId(User);
-            var roles = await _userManager.GetRolesAsync(await _userManager.FindByIdAsync(userId));
-
-            IEnumerable<Assignment> assignments;
-
-            if (roles.Contains("Teacher"))
-            {
-                // teacher sees only their assignments
-                assignments = await _assignmentRepository.GetByTeacherIdAsync(userId);
-            }
-            else
-            {
-                // student sees all assignments
-                assignments = await _assignmentRepository.GetAllAsync();
-            }
-
-            var response = _mapper.Map<IEnumerable<AssignmentResponseDto>>(assignments);
-            return Ok(response);
-        }
-
-
-        [HttpGet("{id}")]
-        [Authorize]
-        public async Task<IActionResult> GetAssignmentById(Guid id)
-        {
-            var userId = _userManager.GetUserId(User);
-            var user = await _userManager.FindByIdAsync(userId);
-            var roles = await _userManager.GetRolesAsync(user);
-
-            Assignment assignment;
-
-            if (roles.Contains("Teacher"))
-            {
-                assignment = await _assignmentRepository.GetFullByIdAsync(id);
-            }
-            else
-            {
-                assignment = await _assignmentRepository.GetByIdAsync(id);
-            }
-
-            if (assignment == null)
-                return NotFound();
-
-            // map depends on wether its student or teacher
-            if (roles.Contains("Teacher"))
-            {
-                var details = _mapper.Map<AssignmentDetailsDto>(assignment);
-                return Ok(details);
-            }
-            else
-            {
-                var response = _mapper.Map<AssignmentResponseDto>(assignment);
-                return Ok(response);
-            }
-        }
-
-
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Teacher")]
-        public async Task<IActionResult> UpdateAssignment(Guid id, [FromBody] UpdateAssignmentDto dto)
-        {
-            //get user id from jwt
-            var teacherId = _userManager.GetUserId(User);
-
-            //get assignment 
-            var assignment = await _assignmentRepository.GetByIdAsync(id);
-
-            if (assignment == null)
-                return NotFound("Assignment not found");
-
-            // check if teacher made this assignment
-            if (assignment.TeacherId != teacherId)
-                return Forbid("You cannot update someone else's assignment");
-
-            // update assignment
-            assignment.Title = dto.Title;
-            assignment.Description = dto.Description;
-            assignment.DueDate = dto.DueDate;
-
-            // save changes
-            var updated = await _assignmentRepository.UpdateAsync(assignment);
-
-         
-            var response = _mapper.Map<AssignmentResponseDto>(updated);
-
-            return Ok(response);
-        }
-
-        [HttpDelete("{id}")]
-        [Authorize(Roles = "Teacher")]
-        public async Task<IActionResult> DeleteAssignment(Guid id)
+        [HasPermission(AppPermissions.Assignments.Create)]
+        public async Task<IActionResult> Create([FromBody] CreateAssignmentDto dto)
         {
             var teacherId = _userManager.GetUserId(User);
 
-            // Make sure the assignment exists AND belongs to this teacher
-            var assignment = await _assignmentRepository.GetByIdAsync(id);
+            var assignment = _mapper.Map<Assignment>(dto);
+            assignment.TeacherId = teacherId;
 
-            if (assignment == null)
-                return NotFound("Assignment not found.");
+            assignment = await _repo.CreateAsync(assignment);
 
-            if (assignment.TeacherId != teacherId)
-                return Forbid("You can delete only your own assignments.");
-
-            var deleted = await _assignmentRepository.DeleteAsync(id);
-
-            if (!deleted)
-                return StatusCode(500, "Failed to delete assignment.");
-
-            return NoContent(); // 204
+            return CreatedAtAction(nameof(GetById),
+                new { id = assignment.Id },
+                _mapper.Map<AssignmentResponseDto>(assignment));
         }
-
-
-
-
-
-
-
 
 
     }
