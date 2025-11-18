@@ -50,9 +50,7 @@ namespace StudentTeacherManagment.Controllers
             return Ok("User registered successfully.");
         }
 
-        // ================================ //
-        //             LOGIN                //
-        // ================================ //
+  
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto model)
         {
