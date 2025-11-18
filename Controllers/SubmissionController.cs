@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using StudentTeacherManagment.Models.Domain;
 using StudentTeacherManagment.Models.DTOs.Submissions;
+using StudentTeacherManagment.Permissions;
 using StudentTeacherManagment.Repositories.SubmissionRepository;
 
 namespace StudentTeacherManagment.Controllers
@@ -12,54 +13,51 @@ namespace StudentTeacherManagment.Controllers
     [Route("api/[controller]")]
     public class SubmissionsController : ControllerBase
     {
-        private readonly ISubmissionRepository _submissionRepo;
+        private readonly ISubmissionRepository _repo;
         private readonly IMapper _mapper;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public SubmissionsController(
-            ISubmissionRepository submissionRepo,
+            ISubmissionRepository repo,
             IMapper mapper,
             UserManager<ApplicationUser> userManager)
         {
-            _submissionRepo = submissionRepo;
+            _repo = repo;
             _mapper = mapper;
             _userManager = userManager;
         }
 
 
-
+        // 
+        // CREATE SUBMISSION (Student)
+    
         [HttpPost]
-        [Authorize(Roles = "Student")]
-        public async Task<IActionResult> CreateSubmission([FromForm] SubmissionCreateDto dto)
+        [HasPermission(AppPermissions.Submissions.Create)]
+        public async Task<IActionResult> Create([FromForm] SubmissionCreateDto dto)
         {
             var studentId = _userManager.GetUserId(User);
-            if (studentId == null)
-                return Unauthorized("Invalid token");
+
+            if (dto.File == null || dto.File.Length == 0)
+                return BadRequest("A PDF file is required.");
 
             // Prevent duplicates
-            var existing = await _submissionRepo.GetByStudentIdAsync(studentId);
+            var existing = await _repo.GetByStudentIdAsync(studentId);
             if (existing.Any(s => s.AssignmentId == dto.AssignmentId))
                 return BadRequest("You already submitted this assignment.");
 
-            if (dto.File == null || dto.File.Length == 0)
-                return BadRequest("File is required.");
-
-            // 1. Generate file name
-            var fileName = $"{Guid.NewGuid()}_{dto.File.FileName}";
+            // Save file
             var folder = Path.Combine("wwwroot", "submissions");
+            Directory.CreateDirectory(folder);
 
-            if (!Directory.Exists(folder))
-                Directory.CreateDirectory(folder);
-
+            var fileName = $"{Guid.NewGuid()}_{dto.File.FileName}";
             var filePath = Path.Combine(folder, fileName);
 
-            // 2. Save file to disk
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await dto.File.CopyToAsync(stream);
             }
 
-            // 3. Create submission object
+            // Create submission
             var submission = new Submission
             {
                 Id = Guid.NewGuid(),
@@ -72,91 +70,105 @@ namespace StudentTeacherManagment.Controllers
                 Status = "Submitted"
             };
 
-            submission = await _submissionRepo.CreateAsync(submission);
+            submission = await _repo.CreateAsync(submission);
 
-            var response = _mapper.Map<SubmissionResponseDto>(submission);
-            return Ok(response);
+            return Ok(_mapper.Map<SubmissionResponseDto>(submission));
         }
 
 
-
+        // GET SUBMISSION BY ID
+        // Student → only their own
+        // Teacher/Admin → must own assignment or be admin
+   
         [HttpGet("{id}")]
-        [Authorize]
-        public async Task<IActionResult> GetSubmissionById(Guid id)
+        [HasPermission(AppPermissions.Submissions.Read)]
+        public async Task<IActionResult> GetById(Guid id)
         {
-            var submission = await _submissionRepo.GetByIdAsync(id);
+            var userId = _userManager.GetUserId(User);
+            var user = await _userManager.FindByIdAsync(userId);
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var submission = await _repo.GetByIdAsync(id);
             if (submission == null)
                 return NotFound();
 
-            var userId = _userManager.GetUserId(User);
-            var roles = await _userManager.GetRolesAsync(await _userManager.FindByIdAsync(userId));
+            bool isTeacher = roles.Contains("Teacher");
+            bool isAdmin = roles.Contains("Admin");
+            bool isStudent = roles.Contains("Student");
 
-            // student only see his own submission
-            if (roles.Contains("Student") && submission.StudentId != userId)
-                return Forbid();
+            if (isStudent && submission.StudentId != userId)
+                return Forbid("You can only view your own submissions.");
 
-           
+            if (isTeacher && submission.Assignment.TeacherId != userId)
+                return Forbid("You cannot view submissions for assignments you did not create.");
 
-            var response = _mapper.Map<SubmissionResponseDto>(submission);
-            return Ok(response);
+            // Admin bypasses checks
+
+            return Ok(_mapper.Map<SubmissionResponseDto>(submission));
         }
 
 
+        // GET SUBMISSIONS FOR ASSIGNMENT
+        // Teacher/Admin → must own assignment (teacher)
         [HttpGet("assignment/{assignmentId}")]
-        [Authorize(Roles = "Teacher")]
-        public async Task<IActionResult> GetSubmissionsForAssignment(Guid assignmentId)
+        [HasPermission(AppPermissions.Submissions.Read)]
+        public async Task<IActionResult> GetForAssignment(Guid assignmentId)
         {
-            var teacherId = _userManager.GetUserId(User);
+            var userId = _userManager.GetUserId(User);
+            var user = await _userManager.FindByIdAsync(userId);
+            var roles = await _userManager.GetRolesAsync(user);
 
-            // Teacher must own the assignment
-            var submissions = await _submissionRepo.GetByAssignmentIdAsync(assignmentId);
+            bool isTeacher = roles.Contains("Teacher");
+            bool isAdmin = roles.Contains("Admin");
+
+            var submissions = await _repo.GetByAssignmentIdAsync(assignmentId);
+
             if (!submissions.Any())
                 return Ok(new List<SubmissionResponseDto>());
 
-            if (submissions.First().Assignment.TeacherId != teacherId)
+            if (isTeacher && submissions.First().Assignment.TeacherId != userId)
                 return Forbid("You cannot view submissions for assignments you did not create.");
 
-            var response = _mapper.Map<IEnumerable<SubmissionResponseDto>>(submissions);
-            return Ok(response);
+            return Ok(_mapper.Map<IEnumerable<SubmissionResponseDto>>(submissions));
         }
 
 
+        // GRADE SUBMISSION
+        // Teacher/Admin → must own assignment (teacher)
         [HttpPut("{id}/grade")]
-        [Authorize(Roles = "Teacher")]
-        public async Task<IActionResult> GradeSubmission(Guid id, [FromBody] GradeSubmissionDto dto)
+        [HasPermission(AppPermissions.Submissions.Grade)]
+        public async Task<IActionResult> Grade(Guid id, [FromBody] GradeSubmissionDto dto)
         {
-            var submission = await _submissionRepo.GetByIdAsync(id);
+            var submission = await _repo.GetByIdAsync(id);
             if (submission == null)
                 return NotFound("Submission not found.");
 
-            // Ensure the teacher owns the assignment
-            var teacherId = _userManager.GetUserId(User);
-            if (submission.Assignment.TeacherId != teacherId)
+            var userId = _userManager.GetUserId(User);
+            var user = await _userManager.FindByIdAsync(userId);
+            var roles = await _userManager.GetRolesAsync(user);
+
+            bool isTeacher = roles.Contains("Teacher");
+            bool isAdmin = roles.Contains("Admin");
+
+            if (isTeacher && submission.Assignment.TeacherId != userId)
                 return Forbid("You cannot grade submissions for assignments you did not create.");
 
-            // Grade it
-            submission = await _submissionRepo.GradeAsync(id, dto.Grade);
+            submission = await _repo.GradeAsync(id, dto.Grade);
 
-            var response = _mapper.Map<SubmissionResponseDto>(submission);
-            return Ok(response);
+            return Ok(_mapper.Map<SubmissionResponseDto>(submission));
         }
 
 
+        // GET MY SUBMISSIONS (Student)
         [HttpGet("mine")]
-        [Authorize(Roles = "Student")]
+        [HasPermission(AppPermissions.Submissions.Read)]
         public async Task<IActionResult> GetMySubmissions()
         {
             var studentId = _userManager.GetUserId(User);
 
-            if (studentId == null)
-                return Unauthorized("Invalid token");
+            var submissions = await _repo.GetByStudentIdAsync(studentId);
 
-            var submissions = await _submissionRepo.GetByStudentIdAsync(studentId);
-
-            var response = _mapper.Map<IEnumerable<SubmissionResponseDto>>(submissions);
-
-            return Ok(response);
+            return Ok(_mapper.Map<IEnumerable<SubmissionResponseDto>>(submissions));
         }
-
     }
 }

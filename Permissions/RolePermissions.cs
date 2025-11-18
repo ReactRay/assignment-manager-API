@@ -7,36 +7,36 @@
             {
                 ["Teacher"] = new List<string>
                 {
-                    Permissions.Assignments.Create,
-                    Permissions.Assignments.Read,
-                    Permissions.Assignments.Update,
-                    Permissions.Assignments.Delete,
-                    Permissions.Assignments.Grade,
+                    AppPermissions.Assignments.Create,
+                    AppPermissions.Assignments.Read,
+                    AppPermissions.Assignments.Update,
+                    AppPermissions.Assignments.Delete,
+                    AppPermissions.Assignments.Grade,
 
-                    Permissions.Submissions.Read,
-                    Permissions.Submissions.Download,
-                    Permissions.Submissions.Grade
+                    AppPermissions.Submissions.Read,
+                    AppPermissions.Submissions.Download,
+                    AppPermissions.Submissions.Grade
                 },
 
                 ["Student"] = new List<string>
                 {
-                    Permissions.Assignments.Read,
-                    Permissions.Submissions.Create,
-                    Permissions.Submissions.Read
+                    AppPermissions.Assignments.Read,
+                    AppPermissions.Submissions.Create,
+                    AppPermissions.Submissions.Read
                 },
 
                 ["Admin"] = new List<string>
                 {
-                    Permissions.Assignments.Create,
-                    Permissions.Assignments.Read,
-                    Permissions.Assignments.Update,
-                    Permissions.Assignments.Delete,
-                    Permissions.Assignments.Grade,
+                    AppPermissions.Assignments.Create,
+                    AppPermissions.Assignments.Read,
+                    AppPermissions.Assignments.Update,
+                    AppPermissions.Assignments.Delete,
+                    AppPermissions.Assignments.Grade,
 
-                    Permissions.Submissions.Create,
-                    Permissions.Submissions.Read,
-                    Permissions.Submissions.Download,
-                    Permissions.Submissions.Grade
+                    AppPermissions.Submissions.Create,
+                    AppPermissions.Submissions.Read,
+                    AppPermissions.Submissions.Download,
+                    AppPermissions.Submissions.Grade
                 }
             };
     }
