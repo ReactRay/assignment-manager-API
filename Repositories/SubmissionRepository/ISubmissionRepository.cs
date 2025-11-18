@@ -13,5 +13,7 @@ namespace StudentTeacherManagment.Repositories.SubmissionRepository
         Task<Submission?> GetByIdAsync(Guid id);
 
         Task<Submission?> GradeAsync(Guid submissionId, int grade);
+
+
     }
 }
