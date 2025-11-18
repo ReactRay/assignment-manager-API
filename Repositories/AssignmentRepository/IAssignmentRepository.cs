@@ -10,6 +10,8 @@ namespace StudentTeacherManagment.Repositories.AssignmentRepository
 
         Task<IEnumerable<Assignment>> GetByTeacherIdAsync(string teacherId);
 
+        Task<Assignment?> GetFullByIdAsync(Guid id);
+
         Task<Assignment?> UpdateAsync(Assignment assignment);
         Task<bool> DeleteAsync(Guid id);
     }

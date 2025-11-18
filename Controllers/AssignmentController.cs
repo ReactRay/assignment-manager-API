@@ -52,6 +52,100 @@ namespace StudentTeacherManagment.Controllers
         }
 
 
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetAllAssignments()
+        {
+            var userId = _userManager.GetUserId(User);
+            var roles = await _userManager.GetRolesAsync(await _userManager.FindByIdAsync(userId));
+
+            IEnumerable<Assignment> assignments;
+
+            if (roles.Contains("Teacher"))
+            {
+                // teacher sees only their assignments
+                assignments = await _assignmentRepository.GetByTeacherIdAsync(userId);
+            }
+            else
+            {
+                // student sees all assignments
+                assignments = await _assignmentRepository.GetAllAsync();
+            }
+
+            var response = _mapper.Map<IEnumerable<AssignmentResponseDto>>(assignments);
+            return Ok(response);
+        }
+
+
+        [HttpGet("{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetAssignmentById(Guid id)
+        {
+            var userId = _userManager.GetUserId(User);
+            var user = await _userManager.FindByIdAsync(userId);
+            var roles = await _userManager.GetRolesAsync(user);
+
+            Assignment assignment;
+
+            if (roles.Contains("Teacher"))
+            {
+                assignment = await _assignmentRepository.GetFullByIdAsync(id);
+            }
+            else
+            {
+                assignment = await _assignmentRepository.GetByIdAsync(id);
+            }
+
+            if (assignment == null)
+                return NotFound();
+
+            // map depends on wether its student or teacher
+            if (roles.Contains("Teacher"))
+            {
+                var details = _mapper.Map<AssignmentDetailsDto>(assignment);
+                return Ok(details);
+            }
+            else
+            {
+                var response = _mapper.Map<AssignmentResponseDto>(assignment);
+                return Ok(response);
+            }
+        }
+
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> UpdateAssignment(Guid id, [FromBody] UpdateAssignmentDto dto)
+        {
+            //get user id from jwt
+            var teacherId = _userManager.GetUserId(User);
+
+            //get assignment 
+            var assignment = await _assignmentRepository.GetByIdAsync(id);
+
+            if (assignment == null)
+                return NotFound("Assignment not found");
+
+            // check if teacher made this assignment
+            if (assignment.TeacherId != teacherId)
+                return Forbid("You cannot update someone else's assignment");
+
+            // update assignment
+            assignment.Title = dto.Title;
+            assignment.Description = dto.Description;
+            assignment.DueDate = dto.DueDate;
+
+            // save changes
+            var updated = await _assignmentRepository.UpdateAsync(assignment);
+
+         
+            var response = _mapper.Map<AssignmentResponseDto>(updated);
+
+            return Ok(response);
+        }
+
+
+
 
 
 

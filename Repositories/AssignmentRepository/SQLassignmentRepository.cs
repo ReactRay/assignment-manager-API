@@ -43,6 +43,15 @@ namespace StudentTeacherManagment.Repositories.AssignmentRepository
                 .ToListAsync();
         }
 
+        public async Task<Assignment?> GetFullByIdAsync(Guid id)
+        {
+            return await _context.Assignments
+                .Include(a => a.Teacher)
+                .Include(a => a.Submissions)
+                    .ThenInclude(s => s.Student)
+                .FirstOrDefaultAsync(a => a.Id == id);
+        }
+
 
         public async Task<Assignment?> UpdateAsync(Assignment assignment)
         {
