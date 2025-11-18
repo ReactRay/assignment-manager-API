@@ -1,4 +1,6 @@
-﻿namespace StudentTeacherManagment.Models.DTOs.Assignments
+﻿using StudentTeacherManagment.Models.DTOs.Submissions;
+
+namespace StudentTeacherManagment.Models.DTOs.Assignments
 {
     public class AssignmentResponseDto
     {
@@ -9,5 +11,8 @@
 
         public string TeacherId { get; set; }
         public string TeacherName { get; set; }
+
+        public List<SubmissionDto> Submissions { get; set; } = new();
+
     }
 }

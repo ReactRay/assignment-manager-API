@@ -13,7 +13,6 @@ namespace StudentTeacherManagment.Models.DTOs.Assignments
         public string TeacherId { get; set; }
         public string TeacherName { get; set; }
 
-        // Collection of submissions (varies based on user role)
         public List<SubmissionDto> Submissions { get; set; } = new();
     }
 }

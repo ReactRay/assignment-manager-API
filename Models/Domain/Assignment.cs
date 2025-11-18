@@ -8,11 +8,11 @@
         public string Description { get; set; }
         public DateTime DueDate { get; set; }
 
-        // FK — only the teacher who created it
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
         public string TeacherId { get; set; }
         public ApplicationUser Teacher { get; set; }
 
-        // Every assignment can have many student submissions
-        public ICollection<Submission> Submissions { get; set; } = new List<Submission>();
+        public List<Submission> Submissions { get; set; } = new();
     }
 }

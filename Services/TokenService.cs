@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using StudentTeacherManagment.Models.Domain;
 using System.IdentityModel.Tokens.Jwt;
@@ -10,10 +11,17 @@ namespace StudentTeacherManagment.Services
     public class TokenService : ITokenService
     {
         private readonly IConfiguration _config;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public TokenService(IConfiguration config)
+        public TokenService(
+            IConfiguration config,
+            UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager)
         {
             _config = config;
+            _userManager = userManager;
+            _roleManager = roleManager;
         }
 
         public string GenerateToken(ApplicationUser user, IList<string> roles)
@@ -28,12 +36,26 @@ namespace StudentTeacherManagment.Services
                 new Claim("userid", user.Id)
             };
 
-            // Add roles to claims
+
+            // 1️⃣ Add ROLE claims
+
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
+
+                // Load any CLAIMS attached TO THE ROLE
+                var identityRole = _roleManager.FindByNameAsync(role).Result;
+                var roleClaims = _roleManager.GetClaimsAsync(identityRole).Result;
+
+                // Add permissions to token
+                foreach (var rc in roleClaims)
+                {
+                    claims.Add(rc); // permission : Permissions.Assignments.Create
+                }
             }
 
+            // create JWT
+      
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

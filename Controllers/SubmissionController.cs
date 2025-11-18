@@ -30,7 +30,6 @@ namespace StudentTeacherManagment.Controllers
 
         // 
         // CREATE SUBMISSION (Student)
-    
         [HttpPost]
         [HasPermission(AppPermissions.Submissions.Create)]
         public async Task<IActionResult> Create([FromForm] SubmissionCreateDto dto)
@@ -40,14 +39,19 @@ namespace StudentTeacherManagment.Controllers
             if (dto.File == null || dto.File.Length == 0)
                 return BadRequest("A PDF file is required.");
 
-            // Prevent duplicates
+            // Prevent duplicate submissions
             var existing = await _repo.GetByStudentIdAsync(studentId);
             if (existing.Any(s => s.AssignmentId == dto.AssignmentId))
                 return BadRequest("You already submitted this assignment.");
 
-            // Save file
-            var folder = Path.Combine("wwwroot", "submissions");
-            Directory.CreateDirectory(folder);
+            // ----------------------------------------------------------
+            // SAFE ABSOLUTE PATH (fixes crash)
+            // ----------------------------------------------------------
+            var root = Directory.GetCurrentDirectory();
+            var folder = Path.Combine(root, "wwwroot", "submissions");
+
+            if (!Directory.Exists(folder))
+                Directory.CreateDirectory(folder);
 
             var fileName = $"{Guid.NewGuid()}_{dto.File.FileName}";
             var filePath = Path.Combine(folder, fileName);
@@ -57,13 +61,16 @@ namespace StudentTeacherManagment.Controllers
                 await dto.File.CopyToAsync(stream);
             }
 
+            // This path is what the download endpoint will use
+            var relativePath = $"/submissions/{fileName}";
+
             // Create submission
             var submission = new Submission
             {
                 Id = Guid.NewGuid(),
                 AssignmentId = dto.AssignmentId,
                 StudentId = studentId,
-                FilePath = filePath,
+                FilePath = relativePath,       // <<< IMPORTANT: store relative, not physical
                 FileName = dto.File.FileName,
                 FileMimeType = dto.File.ContentType,
                 SubmittedAt = DateTime.UtcNow,
@@ -79,7 +86,7 @@ namespace StudentTeacherManagment.Controllers
         // GET SUBMISSION BY ID
         // Student → only their own
         // Teacher/Admin → must own assignment or be admin
-   
+
         [HttpGet("{id}")]
         [HasPermission(AppPermissions.Submissions.Read)]
         public async Task<IActionResult> GetById(Guid id)
@@ -170,5 +177,40 @@ namespace StudentTeacherManagment.Controllers
 
             return Ok(_mapper.Map<IEnumerable<SubmissionResponseDto>>(submissions));
         }
+
+
+        // DOWNLOAD SUBMISSION FILE
+        [HttpGet("{id}/download")]
+        [Authorize]
+        public async Task<IActionResult> Download(Guid id)
+        {
+            var submission = await _repo.GetByIdAsync(id);
+
+            if (submission == null)
+                return NotFound("Submission not found.");
+
+            var userId = _userManager.GetUserId(User);
+            var roles = await _userManager.GetRolesAsync(await _userManager.FindByIdAsync(userId));
+
+            bool isStudent = roles.Contains("Student");
+            bool isTeacher = roles.Contains("Teacher");
+
+            // STUDENT: can download ONLY their own file
+            if (isStudent && submission.StudentId != userId)
+                return Forbid();
+
+            // TEACHER: can download ONLY if they own the assignment
+            if (isTeacher && submission.Assignment.TeacherId != userId)
+                return Forbid("You cannot download submissions for assignments you did not create.");
+
+            // Check file exists
+            if (!System.IO.File.Exists(submission.FilePath))
+                return NotFound("File not found on server.");
+
+            var fileBytes = await System.IO.File.ReadAllBytesAsync(submission.FilePath);
+
+            return File(fileBytes, submission.FileMimeType, submission.FileName);
+        }
+
     }
 }

@@ -7,8 +7,6 @@
         public string StudentId { get; set; }
         public string StudentName { get; set; }
 
-        public string Content { get; set; }
-
         public DateTime SubmittedAt { get; set; }
         public int? Grade { get; set; }
         public string Status { get; set; }

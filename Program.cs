@@ -114,9 +114,12 @@ builder.Services.AddAutoMapper(typeof(Program));
 // ------------------------------------------------------
 // Repositories & Services
 // ------------------------------------------------------
-builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAssignmentRepository, SQLAssignmentRepository>();
 builder.Services.AddScoped<ISubmissionRepository, SQLsubmissionRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<UserManager<ApplicationUser>>();
+builder.Services.AddScoped<RoleManager<IdentityRole>>();
+
 
 var app = builder.Build();
 
@@ -141,24 +144,28 @@ app.UseAuthorization();
 app.MapControllers();
 
 // ------------------------------------------------------
-// Seed roles + permissions
+// Seed Roles, Permissions, Users, Assignments
 // ------------------------------------------------------
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+    // -------------------------
+    // 1️⃣ CREATE ROLES
+    // -------------------------
     string[] roles = { "Admin", "Teacher", "Student" };
 
-    // Create roles if missing
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))
-        {
             await roleManager.CreateAsync(new IdentityRole(role));
-        }
     }
 
-    // Assign permissions to each role
+    // -------------------------
+    // 2️⃣ ASSIGN PERMISSIONS
+    // -------------------------
     foreach (var roleEntry in RolePermissions.PermissionsByRole)
     {
         var roleName = roleEntry.Key;
@@ -173,11 +180,85 @@ using (var scope = app.Services.CreateScope())
         {
             if (!existingClaims.Any(c => c.Type == "permission" && c.Value == permission))
             {
-                await roleManager.AddClaimAsync(identityRole,
-                    new System.Security.Claims.Claim("permission", permission));
+                await roleManager.AddClaimAsync(
+                    identityRole,
+                    new Claim("permission", permission)
+                );
             }
         }
     }
+
+    // -------------------------
+    // 3️⃣ CREATE USERS
+    // -------------------------
+    async Task<ApplicationUser?> CreateUserIfNotExists(
+        string email, string password, string fullName, string role)
+    {
+        var existing = await userManager.FindByEmailAsync(email);
+        if (existing != null)
+            return existing;
+
+        var user = new ApplicationUser
+        {
+            FullName = fullName,
+            Email = email,
+            UserName = email
+        };
+
+        var result = await userManager.CreateAsync(user, password);
+
+        if (result.Succeeded)
+            await userManager.AddToRoleAsync(user, role);
+
+        return user;
+    }
+
+    // Teachers
+    await CreateUserIfNotExists("teacher1@test.com", "123Asd!", "Teacher One", "Teacher");
+    await CreateUserIfNotExists("teacher2@test.com", "123Asd!", "Teacher Two", "Teacher");
+    await CreateUserIfNotExists("teacher3@test.com", "123Asd!", "Teacher Three", "Teacher");
+
+    // Students
+    await CreateUserIfNotExists("student1@test.com", "123Asd!", "Student One", "Student");
+    await CreateUserIfNotExists("student2@test.com", "123Asd!", "Student Two", "Student");
+    await CreateUserIfNotExists("student3@test.com", "123Asd!", "Student Three", "Student");
+
+    // -------------------------
+    // 4️⃣ SEED ASSIGNMENTS (if empty)
+    // -------------------------
+    if (!db.Assignments.Any())
+    {
+        db.Assignments.AddRange(new List<Assignment>
+        {
+            new Assignment
+            {
+                Id = Guid.NewGuid(),
+                Title = "Math Homework",
+                Description = "Solve all exercises on page 42.",
+                DueDate = DateTime.UtcNow.AddDays(7),
+                CreatedAt = DateTime.UtcNow
+            },
+            new Assignment
+            {
+                Id = Guid.NewGuid(),
+                Title = "English Writing",
+                Description = "Write a 500-word short story.",
+                DueDate = DateTime.UtcNow.AddDays(5),
+                CreatedAt = DateTime.UtcNow
+            },
+            new Assignment
+            {
+                Id = Guid.NewGuid(),
+                Title = "Science Project",
+                Description = "Build a model of the solar system.",
+                DueDate = DateTime.UtcNow.AddDays(10),
+                CreatedAt = DateTime.UtcNow
+            }
+        });
+
+        await db.SaveChangesAsync();
+    }
 }
+
 
 app.Run();

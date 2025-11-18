@@ -12,8 +12,8 @@ using StudentTeacherManagment.Data;
 namespace StudentTeacherManagment.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251118114605_Initial")]
-    partial class Initial
+    [Migration("20251118172130_AddCreatedAtToAssignment")]
+    partial class AddCreatedAtToAssignment
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -233,6 +233,9 @@ namespace StudentTeacherManagment.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -264,8 +267,13 @@ namespace StudentTeacherManagment.Migrations
                     b.Property<Guid>("AssignmentId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Content")
-                        .IsRequired()
+                    b.Property<string>("FileMimeType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FileName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FilePath")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("Grade")
