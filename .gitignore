@@ -1,0 +1,64 @@
+## Build folders
+bin/
+obj/
+
+## User-specific files
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Visual Studio generated
+.vs/
+*.dbmdl
+*.jfm
+
+## Logs
+*.log
+logs/
+
+## Output
+*.dll
+*.exe
+*.pdb
+
+## Packages
+packages/
+*.nupkg
+
+## Publish folders
+**/Properties/PublishProfiles/
+
+## Temporary files
+*.tmp
+*.temp
+*.pidb
+*.svclog
+*.cache
+*.config
+
+## Environment files
+*.env
+
+## ASP.NET secrets
+secrets.json
+
+## Database
+*.mdf
+*.ldf
+*.sqlite
+*.db
+
+## IDE folders
+.idea/
+*.iml
+
+## OS-generated
+.DS_Store
+Thumbs.db
+
+## Node (if you add frontend later)
+node_modules/
+dist/
+build/
