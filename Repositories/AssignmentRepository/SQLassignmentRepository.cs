@@ -20,29 +20,15 @@ namespace StudentTeacherManagment.Repositories.AssignmentRepository
             return assignment;
         }
 
+        // ⚠️ Basic fetch: do NOT load submissions here (only for students)
         public async Task<Assignment?> GetByIdAsync(Guid id)
         {
             return await _context.Assignments
-                .Include(a => a.Teacher)      // optional
-                .Include(a => a.Submissions)  // optional
+                .Include(a => a.Teacher)
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 
-        public async Task<IEnumerable<Assignment>> GetAllAsync()
-        {
-            return await _context.Assignments
-                .Include(a => a.Teacher)
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<Assignment>> GetByTeacherIdAsync(string teacherId)
-        {
-            return await _context.Assignments
-                .Where(a => a.TeacherId == teacherId)
-                .Include(a => a.Submissions)  
-                .ToListAsync();
-        }
-
+        // ✔️ For Teacher/Admin we must load submissions + student names
         public async Task<Assignment?> GetFullByIdAsync(Guid id)
         {
             return await _context.Assignments
@@ -52,6 +38,26 @@ namespace StudentTeacherManagment.Repositories.AssignmentRepository
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 
+        // ✔️ Load submissions for ALL assignments
+        public async Task<IEnumerable<Assignment>> GetAllAsync()
+        {
+            return await _context.Assignments
+                .Include(a => a.Teacher)
+                .Include(a => a.Submissions)
+                    .ThenInclude(s => s.Student)
+                .ToListAsync();
+        }
+
+        // ✔️ Teachers only see their assignments (with submissions)
+        public async Task<IEnumerable<Assignment>> GetByTeacherIdAsync(string teacherId)
+        {
+            return await _context.Assignments
+                .Where(a => a.TeacherId == teacherId)
+                .Include(a => a.Teacher)
+                .Include(a => a.Submissions)
+                    .ThenInclude(s => s.Student)
+                .ToListAsync();
+        }
 
         public async Task<Assignment?> UpdateAsync(Assignment assignment)
         {
