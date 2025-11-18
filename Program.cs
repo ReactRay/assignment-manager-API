@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StudentTeacherManagment.Data;
 using StudentTeacherManagment.Models.Domain;
+using StudentTeacherManagment.Repositories.AssignmentRepository;
 using StudentTeacherManagment.Services;
 using System.Text;
 
@@ -27,6 +28,10 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 
 //jwt settings
 var jwtSettings = builder.Configuration.GetSection("Jwt");
+
+//repositories
+builder.Services.AddScoped<IAssignmentRepository, SQLAssignmentRepository>();
+
 
 builder.Services.AddAuthentication(options =>
 {
