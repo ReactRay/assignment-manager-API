@@ -35,6 +35,15 @@ namespace StudentTeacherManagment.Repositories.AssignmentRepository
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Assignment>> GetByTeacherIdAsync(string teacherId)
+        {
+            return await _context.Assignments
+                .Where(a => a.TeacherId == teacherId)
+                .Include(a => a.Submissions)  
+                .ToListAsync();
+        }
+
+
         public async Task<Assignment?> UpdateAsync(Assignment assignment)
         {
             var existing = await _context.Assignments.FindAsync(assignment.Id);
