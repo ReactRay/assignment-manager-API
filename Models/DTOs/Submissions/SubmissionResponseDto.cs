@@ -3,7 +3,6 @@
     public class SubmissionResponseDto
     {
         public Guid Id { get; set; }
-        public string Content { get; set; }
         public DateTime SubmittedAt { get; set; }
 
         public int? Grade { get; set; }
@@ -13,5 +12,9 @@
         public string StudentName { get; set; }
 
         public Guid AssignmentId { get; set; }
+
+        // 🔽 new
+        public string? FileUrl { get; set; }
+        public string? FileName { get; set; }
     }
 }

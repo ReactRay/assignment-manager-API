@@ -3,6 +3,7 @@
     public class SubmissionCreateDto
     {
         public Guid AssignmentId { get; set; }
-        public string Content { get; set; }
+        public IFormFile File { get; set; }   // PDF upload
     }
 }
+

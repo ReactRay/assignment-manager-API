@@ -6,7 +6,10 @@
         public Guid Id { get; set; } = Guid.NewGuid();
         public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
 
-        public string Content { get; set; }   // <- text only
+        public string? FilePath { get; set; }
+        public string? FileName { get; set; }
+        public string? FileMimeType { get; set; }
+
 
         public int? Grade { get; set; }
         public string Status { get; set; } = "Pending";

@@ -30,25 +30,44 @@ namespace StudentTeacherManagment.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Student")]
-        public async Task<IActionResult> CreateSubmission([FromBody] SubmissionCreateDto dto)
+        public async Task<IActionResult> CreateSubmission([FromForm] SubmissionCreateDto dto)
         {
             var studentId = _userManager.GetUserId(User);
-
             if (studentId == null)
                 return Unauthorized("Invalid token");
 
-            // Optional: Prevent duplicate submissions per assignment
+            // Prevent duplicates
             var existing = await _submissionRepo.GetByStudentIdAsync(studentId);
             if (existing.Any(s => s.AssignmentId == dto.AssignmentId))
                 return BadRequest("You already submitted this assignment.");
 
-            // Map DTO -> domain
+            if (dto.File == null || dto.File.Length == 0)
+                return BadRequest("File is required.");
+
+            // 1. Generate file name
+            var fileName = $"{Guid.NewGuid()}_{dto.File.FileName}";
+            var folder = Path.Combine("wwwroot", "submissions");
+
+            if (!Directory.Exists(folder))
+                Directory.CreateDirectory(folder);
+
+            var filePath = Path.Combine(folder, fileName);
+
+            // 2. Save file to disk
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await dto.File.CopyToAsync(stream);
+            }
+
+            // 3. Create submission object
             var submission = new Submission
             {
                 Id = Guid.NewGuid(),
                 AssignmentId = dto.AssignmentId,
                 StudentId = studentId,
-                Content = dto.Content,
+                FilePath = filePath,
+                FileName = dto.File.FileName,
+                FileMimeType = dto.File.ContentType,
                 SubmittedAt = DateTime.UtcNow,
                 Status = "Submitted"
             };
@@ -58,6 +77,7 @@ namespace StudentTeacherManagment.Controllers
             var response = _mapper.Map<SubmissionResponseDto>(submission);
             return Ok(response);
         }
+
 
 
         [HttpGet("{id}")]
