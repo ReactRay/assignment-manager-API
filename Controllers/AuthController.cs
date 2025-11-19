@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using StudentTeacherManagment.Models.Domain;
 using StudentTeacherManagment.Models.DTOs.Auth;
-using StudentTeacherManagment.Services;
+using StudentTeacherManagment.Services.Token;
 
 namespace StudentTeacherManagment.Controllers
 {

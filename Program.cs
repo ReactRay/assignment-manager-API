@@ -4,10 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StudentTeacherManagment.Data;
 using StudentTeacherManagment.Models.Domain;
+using StudentTeacherManagment.Permissions;
 using StudentTeacherManagment.Repositories.AssignmentRepository;
 using StudentTeacherManagment.Repositories.SubmissionRepository;
 using StudentTeacherManagment.Services;
-using StudentTeacherManagment.Permissions;
+using StudentTeacherManagment.Services.AdminService;
+using StudentTeacherManagment.Services.AssignmentHelpers;
+using StudentTeacherManagment.Services.Token;
 using System.Security.Claims;
 using System.Text;
 
@@ -116,9 +119,14 @@ builder.Services.AddAutoMapper(typeof(Program));
 // ------------------------------------------------------
 builder.Services.AddScoped<IAssignmentRepository, SQLAssignmentRepository>();
 builder.Services.AddScoped<ISubmissionRepository, SQLsubmissionRepository>();
-builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ITokenService,TokenService>();
 builder.Services.AddScoped<UserManager<ApplicationUser>>();
 builder.Services.AddScoped<RoleManager<IdentityRole>>();
+builder.Services.AddScoped<AdminService>();
+builder.Services.AddScoped<ISubmissionService,SubmissionService>();
+builder.Services.AddScoped<IAssignmentService,AssignmentService>();
+
+
 
 
 builder.Services.AddCors(options =>

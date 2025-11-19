@@ -1,150 +1,58 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using StudentTeacherManagment.Models.Domain;
+using StudentTeacherManagment.Models.DTOs.Admin;
+using StudentTeacherManagment.Services.AdminService;
 
 namespace StudentTeacherManagment.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]  // Only Admin can use these endpoints
+    [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly AdminService _adminService;
 
-        public AdminController(
-            UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager)
+        public AdminController(AdminService adminService)
         {
-            _userManager = userManager;
-            _roleManager = roleManager;
+            _adminService = adminService;
         }
 
-        // ------------------------------------------------------
-        // 1. GET ALL USERS + THEIR ROLES
-        // ------------------------------------------------------
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsers()
         {
-            var users = _userManager.Users.ToList();
-
-            var result = new List<object>();
-
-            foreach (var user in users)
-            {
-                var roles = await _userManager.GetRolesAsync(user);
-
-                result.Add(new
-                {
-                    user.Id,
-                    user.FullName,
-                    user.Email,
-                    Roles = roles
-                });
-            }
-
-            return Ok(result);
+            return Ok(await _adminService.GetAllUsersAsync());
         }
 
-        // ------------------------------------------------------
-        // 2. ASSIGN ROLE
-        // ------------------------------------------------------
         [HttpPost("users/{userId}/roles/{roleName}")]
-        public async Task<IActionResult> GiveRole(string userId, string roleName)
+        public async Task<IActionResult> AssignRole(string userId, string roleName)
         {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return NotFound("User not found.");
-
-            if (!await _roleManager.RoleExistsAsync(roleName))
-                return BadRequest("Role does not exist.");
-
-            await _userManager.AddToRoleAsync(user, roleName);
-            return Ok($"Role '{roleName}' added to {user.Email}");
+            await _adminService.AssignRoleAsync(userId, roleName);
+            return Ok($"Role '{roleName}' assigned.");
         }
 
-        // ------------------------------------------------------
-        // 3. REMOVE ROLE
-        // ------------------------------------------------------
         [HttpDelete("users/{userId}/roles/{roleName}")]
         public async Task<IActionResult> RemoveRole(string userId, string roleName)
         {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return NotFound("User not found.");
-
-            await _userManager.RemoveFromRoleAsync(user, roleName);
-            return Ok($"Role '{roleName}' removed from {user.Email}");
+            await _adminService.RemoveRoleAsync(userId, roleName);
+            return Ok($"Role '{roleName}' removed.");
         }
 
-        // ------------------------------------------------------
-        // 4. CREATE ADMIN USER
-        // ------------------------------------------------------
         [HttpPost("create-admin")]
-        public async Task<IActionResult> CreateAdmin([FromBody] CreateUserRequest dto)
+        public async Task<IActionResult> CreateAdmin([FromBody] CreateUserRequestDto dto)
         {
-            var user = new ApplicationUser
-            {
-                Email = dto.Email,
-                UserName = dto.Email,
-                FullName = dto.FullName
-            };
-
-            var result = await _userManager.CreateAsync(user, dto.Password);
-            if (!result.Succeeded) return BadRequest(result.Errors);
-
-            await _userManager.AddToRoleAsync(user, "Admin");
-
-            return Ok("Admin created.");
+            return Ok(await _adminService.CreateUserWithRoleAsync(dto, "Admin"));
         }
 
-        // ------------------------------------------------------
-        // 5. CREATE TEACHER USER
-        // ------------------------------------------------------
         [HttpPost("create-teacher")]
-        public async Task<IActionResult> CreateTeacher([FromBody] CreateUserRequest dto)
+        public async Task<IActionResult> CreateTeacher([FromBody] CreateUserRequestDto dto)
         {
-            var user = new ApplicationUser
-            {
-                Email = dto.Email,
-                UserName = dto.Email,
-                FullName = dto.FullName
-            };
-
-            var result = await _userManager.CreateAsync(user, dto.Password);
-            if (!result.Succeeded) return BadRequest(result.Errors);
-
-            await _userManager.AddToRoleAsync(user, "Teacher");
-
-            return Ok("Teacher created.");
+            return Ok(await _adminService.CreateUserWithRoleAsync(dto, "Teacher"));
         }
 
-        // ------------------------------------------------------
-        // OPTIONAL: CREATE STUDENT
-        // ------------------------------------------------------
         [HttpPost("create-student")]
-        public async Task<IActionResult> CreateStudent([FromBody] CreateUserRequest dto)
+        public async Task<IActionResult> CreateStudent([FromBody] CreateUserRequestDto dto)
         {
-            var user = new ApplicationUser
-            {
-                Email = dto.Email,
-                UserName = dto.Email,
-                FullName = dto.FullName
-            };
-
-            var result = await _userManager.CreateAsync(user, dto.Password);
-            if (!result.Succeeded) return BadRequest(result.Errors);
-
-            await _userManager.AddToRoleAsync(user, "Student");
-
-            return Ok("Student created.");
+            return Ok(await _adminService.CreateUserWithRoleAsync(dto, "Student"));
         }
-    }
-
-    // SIMPLE DTO FOR USER CREATION
-    public class CreateUserRequest
-    {
-        public string Email { get; set; }
-        public string FullName { get; set; }
-        public string Password { get; set; }
     }
 }
