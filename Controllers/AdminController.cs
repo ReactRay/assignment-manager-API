@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentTeacherManagment.Models.DTOs.Admin;
-using StudentTeacherManagment.Services.AdminService;
+using StudentTeacherManagment.Services.AdminHelpers;
 
 namespace StudentTeacherManagment.Controllers
 {
@@ -10,11 +10,11 @@ namespace StudentTeacherManagment.Controllers
     [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
-        private readonly AdminService _adminService;
+        private readonly IAdminService _adminService;
 
-        public AdminController(AdminService adminService)
+        public AdminController(IAdminService AdminService)
         {
-            _adminService = adminService;
+            _adminService = AdminService;
         }
 
         [HttpGet("users")]
@@ -54,5 +54,7 @@ namespace StudentTeacherManagment.Controllers
         {
             return Ok(await _adminService.CreateUserWithRoleAsync(dto, "Student"));
         }
+
+
     }
 }

@@ -8,7 +8,7 @@ using StudentTeacherManagment.Permissions;
 using StudentTeacherManagment.Repositories.AssignmentRepository;
 using StudentTeacherManagment.Repositories.SubmissionRepository;
 using StudentTeacherManagment.Services;
-using StudentTeacherManagment.Services.AdminService;
+using StudentTeacherManagment.Services.AdminHelpers;
 using StudentTeacherManagment.Services.AssignmentHelpers;
 using StudentTeacherManagment.Services.Token;
 using System.Security.Claims;
@@ -16,14 +16,14 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ------------------------------------------------------
+
 // Controllers
-// ------------------------------------------------------
+
 builder.Services.AddControllers();
 
-// ------------------------------------------------------
+
 // Swagger + JWT auth
-// ------------------------------------------------------
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -56,22 +56,19 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ------------------------------------------------------
+
 // DbContext
-// ------------------------------------------------------
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ------------------------------------------------------
+
 // Identity
-// ------------------------------------------------------
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-// ------------------------------------------------------
 // Authorization Policies (Permissions)
-// ------------------------------------------------------
 builder.Services.AddAuthorization(options =>
 {
     foreach (var rolePermList in RolePermissions.PermissionsByRole.Values)
@@ -84,9 +81,7 @@ builder.Services.AddAuthorization(options =>
     }
 });
 
-// ------------------------------------------------------
 // JWT Authentication
-// ------------------------------------------------------
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 
 builder.Services.AddAuthentication(options =>
@@ -109,26 +104,23 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// ------------------------------------------------------
 // AutoMapper
-// ------------------------------------------------------
 builder.Services.AddAutoMapper(typeof(Program));
 
-// ------------------------------------------------------
-// Repositories & Services
-// ------------------------------------------------------
+
+// Repositories / Services
+
 builder.Services.AddScoped<IAssignmentRepository, SQLAssignmentRepository>();
 builder.Services.AddScoped<ISubmissionRepository, SQLsubmissionRepository>();
 builder.Services.AddScoped<ITokenService,TokenService>();
-builder.Services.AddScoped<UserManager<ApplicationUser>>();
-builder.Services.AddScoped<RoleManager<IdentityRole>>();
-builder.Services.AddScoped<AdminService>();
+
+builder.Services.AddScoped<IAdminService,AdminService>();
 builder.Services.AddScoped<ISubmissionService,SubmissionService>();
 builder.Services.AddScoped<IAssignmentService,AssignmentService>();
 
 
 
-
+// cors
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
@@ -144,18 +136,16 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// ------------------------------------------------------
-// Swagger
-// ------------------------------------------------------
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// ------------------------------------------------------
+
 // Middleware Pipeline
-// ------------------------------------------------------
+
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 
@@ -166,9 +156,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// ------------------------------------------------------
-// Seed Roles, Permissions, Users, Assignments
-// ------------------------------------------------------
+
+// Seed dummy data
+
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();

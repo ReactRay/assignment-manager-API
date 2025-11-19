@@ -4,6 +4,7 @@ using StudentTeacherManagment.Services;
 using StudentTeacherManagment.Models.DTOs.Submissions;
 using StudentTeacherManagment.Permissions;
 using AutoMapper;
+using System.Security.Claims;
 
 namespace StudentTeacherManagment.Controllers
 {
@@ -20,11 +21,14 @@ namespace StudentTeacherManagment.Controllers
             _mapper = mapper;
         }
 
+        private string GetUserId() =>
+            User.FindFirstValue("userid"); 
+
         [HttpPost]
         [HasPermission(AppPermissions.Submissions.Create)]
         public async Task<IActionResult> Create([FromForm] SubmissionCreateDto dto)
         {
-            var studentId = User.FindFirst("id")?.Value;
+            var studentId = GetUserId();
 
             var sub = await _service.CreateSubmissionAsync(studentId, dto);
             return Ok(_mapper.Map<SubmissionResponseDto>(sub));
@@ -34,7 +38,7 @@ namespace StudentTeacherManagment.Controllers
         [HasPermission(AppPermissions.Submissions.Read)]
         public async Task<IActionResult> Get(Guid id)
         {
-            var userId = User.FindFirst("id")?.Value;
+            var userId = GetUserId();
             var sub = await _service.GetByIdAsync(id, userId);
             return Ok(_mapper.Map<SubmissionResponseDto>(sub));
         }
@@ -43,7 +47,7 @@ namespace StudentTeacherManagment.Controllers
         [HasPermission(AppPermissions.Submissions.Read)]
         public async Task<IActionResult> GetForAssignment(Guid assignmentId)
         {
-            var userId = User.FindFirst("id")?.Value;
+            var userId = GetUserId();
             var subs = await _service.GetForAssignmentAsync(assignmentId, userId);
             return Ok(_mapper.Map<IEnumerable<SubmissionResponseDto>>(subs));
         }
@@ -52,7 +56,7 @@ namespace StudentTeacherManagment.Controllers
         [HasPermission(AppPermissions.Submissions.Grade)]
         public async Task<IActionResult> Grade(Guid id, [FromBody] GradeSubmissionDto dto)
         {
-            var userId = User.FindFirst("id")?.Value;
+            var userId = GetUserId();
             var sub = await _service.GradeSubmissionAsync(id, dto.Grade, userId);
             return Ok(_mapper.Map<SubmissionResponseDto>(sub));
         }
@@ -61,7 +65,7 @@ namespace StudentTeacherManagment.Controllers
         [HasPermission(AppPermissions.Submissions.Read)]
         public async Task<IActionResult> Mine()
         {
-            var studentId = User.FindFirst("id")?.Value;
+            var studentId = GetUserId();
             var subs = await _service.GetMySubmissionsAsync(studentId);
             return Ok(_mapper.Map<IEnumerable<SubmissionResponseDto>>(subs));
         }
@@ -70,7 +74,7 @@ namespace StudentTeacherManagment.Controllers
         [Authorize]
         public async Task<IActionResult> Download(Guid id)
         {
-            var userId = User.FindFirst("id")?.Value;
+            var userId = GetUserId();
 
             var (bytes, mime, fileName) = await _service.DownloadFileAsync(id, userId);
 

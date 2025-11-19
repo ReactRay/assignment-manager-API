@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using StudentTeacherManagment.Models.Domain;
 using StudentTeacherManagment.Models.DTOs.Admin;
+using StudentTeacherManagment.Services.AdminHelpers;
+using System.Security.Claims;
 
-namespace StudentTeacherManagment.Services.AdminService
+namespace StudentTeacherManagment.Services.AdminHelpers
 {
-    public class AdminService
+    public class AdminService : IAdminService
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -74,5 +76,8 @@ namespace StudentTeacherManagment.Services.AdminService
 
             await _userManager.RemoveFromRoleAsync(user, roleName);
         }
+
+     
+
     }
 }
