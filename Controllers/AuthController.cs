@@ -24,9 +24,6 @@ namespace StudentTeacherManagment.Controllers
             _tokenService = tokenService;
         }
 
-        // ================================ //
-        //            REGISTER              //
-        // ================================ //
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto model)
         {
@@ -78,6 +75,7 @@ namespace StudentTeacherManagment.Controllers
         }
 
     
+        //stam , bonus for me
         [HttpPost("seed-roles")]
         public async Task<IActionResult> SeedRoles()
         {

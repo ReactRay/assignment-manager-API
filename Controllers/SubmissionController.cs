@@ -195,22 +195,26 @@ namespace StudentTeacherManagment.Controllers
             bool isStudent = roles.Contains("Student");
             bool isTeacher = roles.Contains("Teacher");
 
-            // STUDENT: can download ONLY their own file
+            // STUDENT: only their own file
             if (isStudent && submission.StudentId != userId)
                 return Forbid();
 
-            // TEACHER: can download ONLY if they own the assignment
+            // TEACHER: only their own assignment
             if (isTeacher && submission.Assignment.TeacherId != userId)
                 return Forbid("You cannot download submissions for assignments you did not create.");
 
-            // Check file exists
-            if (!System.IO.File.Exists(submission.FilePath))
+            // Convert RELATIVE path → ABSOLUTE physical path
+            var root = Directory.GetCurrentDirectory();
+            var fullPath = Path.Combine(root, "wwwroot", submission.FilePath.TrimStart('/'));
+
+            if (!System.IO.File.Exists(fullPath))
                 return NotFound("File not found on server.");
 
-            var fileBytes = await System.IO.File.ReadAllBytesAsync(submission.FilePath);
+            var fileBytes = await System.IO.File.ReadAllBytesAsync(fullPath);
 
             return File(fileBytes, submission.FileMimeType, submission.FileName);
         }
+
 
     }
 }

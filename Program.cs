@@ -121,6 +121,19 @@ builder.Services.AddScoped<UserManager<ApplicationUser>>();
 builder.Services.AddScoped<RoleManager<IdentityRole>>();
 
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+
+
 var app = builder.Build();
 
 // ------------------------------------------------------
@@ -136,6 +149,8 @@ if (app.Environment.IsDevelopment())
 // Middleware Pipeline
 // ------------------------------------------------------
 app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
+
 app.UseStaticFiles(); // Enable PDF/Uploads serving
 
 app.UseAuthentication();
