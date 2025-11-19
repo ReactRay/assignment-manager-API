@@ -126,25 +126,30 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
+            policy
+                .WithOrigins(
+                    "http://localhost:5173",   // local dev
+                    "https://assignment-manager-client-j9x3.vercel.app", // main prod
+                    "https://assignment-manager-client-j9x3-git-main-reactrays-projects.vercel.app" // preview builds
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
         });
 });
+
 
 
 var app = builder.Build();
 
 
-if (app.Environment.IsDevelopment())
-{
+
     app.UseSwagger();
     app.UseSwaggerUI();
-}
 
 
-// Middleware Pipeline
+
+
 
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
@@ -165,9 +170,9 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-    // -------------------------
-    // 1️⃣ CREATE ROLES
-    // -------------------------
+
+    //  roles
+ 
     string[] roles = { "Admin", "Teacher", "Student" };
 
     foreach (var role in roles)
@@ -176,9 +181,9 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole(role));
     }
 
-    // -------------------------
-    // 2️⃣ ASSIGN PERMISSIONS
-    // -------------------------
+  
+    // permission assignment
+
     foreach (var roleEntry in RolePermissions.PermissionsByRole)
     {
         var roleName = roleEntry.Key;
@@ -201,9 +206,7 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    // -------------------------
-    // 3️⃣ CREATE USERS
-    // -------------------------
+  
     async Task<ApplicationUser?> CreateUserIfNotExists(
         string email, string password, string fullName, string role)
     {
@@ -226,6 +229,10 @@ using (var scope = app.Services.CreateScope())
         return user;
     }
 
+
+    // Admin
+    await CreateUserIfNotExists("admin@test.com", "Admin123!", "System Admin", "Admin");
+
     // Teachers
     await CreateUserIfNotExists("teacher1@test.com", "123Asd!", "Teacher One", "Teacher");
     await CreateUserIfNotExists("teacher2@test.com", "123Asd!", "Teacher Two", "Teacher");
@@ -236,41 +243,6 @@ using (var scope = app.Services.CreateScope())
     await CreateUserIfNotExists("student2@test.com", "123Asd!", "Student Two", "Student");
     await CreateUserIfNotExists("student3@test.com", "123Asd!", "Student Three", "Student");
 
-    // -------------------------
-    // 4️⃣ SEED ASSIGNMENTS (if empty)
-    // -------------------------
-    if (!db.Assignments.Any())
-    {
-        db.Assignments.AddRange(new List<Assignment>
-        {
-            new Assignment
-            {
-                Id = Guid.NewGuid(),
-                Title = "Math Homework",
-                Description = "Solve all exercises on page 42.",
-                DueDate = DateTime.UtcNow.AddDays(7),
-                CreatedAt = DateTime.UtcNow
-            },
-            new Assignment
-            {
-                Id = Guid.NewGuid(),
-                Title = "English Writing",
-                Description = "Write a 500-word short story.",
-                DueDate = DateTime.UtcNow.AddDays(5),
-                CreatedAt = DateTime.UtcNow
-            },
-            new Assignment
-            {
-                Id = Guid.NewGuid(),
-                Title = "Science Project",
-                Description = "Build a model of the solar system.",
-                DueDate = DateTime.UtcNow.AddDays(10),
-                CreatedAt = DateTime.UtcNow
-            }
-        });
-
-        await db.SaveChangesAsync();
-    }
 }
 
 

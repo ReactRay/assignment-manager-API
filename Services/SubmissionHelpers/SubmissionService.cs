@@ -22,31 +22,47 @@ namespace StudentTeacherManagment.Services
             _env = env;
         }
 
-        // ----------------------------------------------------
-        // CREATE SUBMISSION
-        // ----------------------------------------------------
+
         public async Task<Submission> CreateSubmissionAsync(string studentId, SubmissionCreateDto dto)
         {
             if (dto.File == null || dto.File.Length == 0)
-                throw new Exception("A PDF file is required.");
+                throw new Exception("A file is required.");
 
+            // Allowed MIME types
+            var allowedTypes = new[]
+            {
+        "application/pdf",
+        "application/msword", // .doc
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+        "text/plain" // .txt
+    };
+
+            if (!allowedTypes.Contains(dto.File.ContentType))
+                throw new Exception("Only PDF, DOC, DOCX, or TXT files are allowed.");
+
+            // Allowed extensions (extra validation)
+            var ext = Path.GetExtension(dto.File.FileName).ToLower();
+            var allowedExt = new[] { ".pdf", ".doc", ".docx", ".txt" };
+
+            if (!allowedExt.Contains(ext))
+                throw new Exception("Invalid file type. Allowed: PDF, DOC, DOCX, TXT.");
+
+            // Check duplicate submission
             var existing = await _repo.GetByStudentIdAsync(studentId);
             if (existing.Any(s => s.AssignmentId == dto.AssignmentId))
                 throw new Exception("You already submitted this assignment.");
 
-            // Path: wwwroot/uploads/submissions
+            // Ensure folder exists
             var uploadsRoot = Path.Combine(_env.WebRootPath, "uploads", "submissions");
-
             if (!Directory.Exists(uploadsRoot))
                 Directory.CreateDirectory(uploadsRoot);
 
+            // Save file
             var fileName = $"{Guid.NewGuid()}_{dto.File.FileName}";
             var filePath = Path.Combine(uploadsRoot, fileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
-            {
                 await dto.File.CopyToAsync(stream);
-            }
 
             var relativePath = $"/uploads/submissions/{fileName}";
 
@@ -65,9 +81,6 @@ namespace StudentTeacherManagment.Services
             return await _repo.CreateAsync(submission);
         }
 
-        // ----------------------------------------------------
-        // GET BY ID (with role check)
-        // ----------------------------------------------------
         public async Task<Submission> GetByIdAsync(Guid id, string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -89,9 +102,7 @@ namespace StudentTeacherManagment.Services
             return sub;
         }
 
-        // ----------------------------------------------------
-        // GET FOR ASSIGNMENT
-        // ----------------------------------------------------
+
         public async Task<IEnumerable<Submission>> GetForAssignmentAsync(Guid assignmentId, string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -110,9 +121,6 @@ namespace StudentTeacherManagment.Services
             return subs;
         }
 
-        // ----------------------------------------------------
-        // GRADE SUBMISSION
-        // ----------------------------------------------------
         public async Task<Submission> GradeSubmissionAsync(Guid id, int grade, string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -130,17 +138,12 @@ namespace StudentTeacherManagment.Services
             return await _repo.GradeAsync(id, grade);
         }
 
-        // ----------------------------------------------------
-        // MY submissions
-        // ----------------------------------------------------
         public async Task<IEnumerable<Submission>> GetMySubmissionsAsync(string studentId)
         {
             return await _repo.GetByStudentIdAsync(studentId);
         }
 
-        // ----------------------------------------------------
-        // FILE DOWNLOAD
-        // ----------------------------------------------------
+
         public async Task<(byte[] fileBytes, string mime, string fileName)> DownloadFileAsync(Guid id, string userId)
         {
             var sub = await GetByIdAsync(id, userId);

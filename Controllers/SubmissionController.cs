@@ -69,7 +69,6 @@ namespace StudentTeacherManagment.Controllers
             var subs = await _service.GetMySubmissionsAsync(studentId);
             return Ok(_mapper.Map<IEnumerable<SubmissionResponseDto>>(subs));
         }
-
         [HttpGet("{id}/download")]
         [Authorize]
         public async Task<IActionResult> Download(Guid id)
@@ -78,7 +77,9 @@ namespace StudentTeacherManagment.Controllers
 
             var (bytes, mime, fileName) = await _service.DownloadFileAsync(id, userId);
 
+            // ⭐ This overload fixes everything — DO NOT append headers manually
             return File(bytes, mime, fileName);
         }
+
     }
 }
