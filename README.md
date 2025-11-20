@@ -18,8 +18,8 @@ https://assignment-manager-client-j9x3.vercel.app/
 
 ## 📂 Repositories
 
--   **Frontend:** https://github.com/ReactRay/assignment-manager-Client
--   **Backend:** [https://github.com/ReactRay/assignment-manager-API](https://github.com/ReactRay/assignment-manager-API)
+-   Frontend: https://github.com/ReactRay/assignment-manager-Client\
+-   Backend: https://github.com/ReactRay/assignment-manager-API
 
 ------------------------------------------------------------------------
 
@@ -33,22 +33,24 @@ https://assignment-manager-client-j9x3.vercel.app/
 
 ### Admin
 
--   Full user management (create, edit, delete)
--   Manage teachers, students, and admins
--   System-wide permissions and access control
+-   Full user management\
+-   Assign roles (admin/teacher/student)\
+-   Create teachers, students, admins\
+-   Manage system-wide permissions
 
 ### Teacher
 
--   Create assignments
--   View and grade submissions
--   Upload files (PDF/doc/images)
--   update , delete assignments
+-   Create assignments\
+-   Update / delete assignments\
+-   Grade submissions\
+-   Manage classes & submissions
 
 ### Student
 
--   View assignments
--   Submit homework with file upload
--   Track submission status and grades
+-   View assignments\
+-   Submit homework with file upload\
+-   Download feedback + graded files\
+-   Track progress
 
 ------------------------------------------------------------------------
 
@@ -59,152 +61,198 @@ https://assignment-manager-client-j9x3.vercel.app/
 -   React (Vite)
 -   Axios
 -   React Router
--   Custom CSS styling
--   Role-protected routing
+-   Custom CSS
+-   Role-based routing
 
 ### Backend
 
 -   ASP.NET Core 8 Web API
 -   Entity Framework Core
--   SQL Server (Azure)
+-   SQL Server
 -   ASP.NET Identity + JWT
 -   AutoMapper
 -   Repository Pattern
 
 ### Deployment
 
--   Vercel (React client)
--   Azure App Service (API)
+-   Vercel (Frontend)
+-   Azure App Service (Backend)
 -   Azure SQL Database
 
 ------------------------------------------------------------------------
 
 ## 🔐 Authentication & Authorization
 
--   JWT token-based authentication
--   ASP.NET Identity user management
--   Role-based authorization:
-    -   `Admin`
-    -   `Teacher`
-    -   `Student`
--   Protected API + protected frontend routes
+Roles: - `Admin` - `Teacher` - `Student`
+
+The backend uses: - ASP.NET Identity\
+- JWT Authentication\
+- Policy-based authorization
 
 ------------------------------------------------------------------------
 
-## 📁 File Uploads
+# 📘 Full API Reference
 
-Supports uploading: - PDF\
-- Images\
-- Word docs\
-- Any file stored as byte\[\] in SQL Server
+## 🔑 Auth Endpoints
 
-Teachers and admins can download submissions.
+### Register
 
-------------------------------------------------------------------------
+`POST /api/Auth/register`
 
-## 📘 Pages Overview
+### Login
 
-### Public
+`POST /api/Auth/login`
 
--   Home
--   Guide
--   Login
--   Register
+### Seed Roles
 
-### Protected
-
--   Admin Dashboard
--   Teacher Dashboard
--   Student Dashboard
--   Assignment Create / Submit
--   Submissions Viewer
+`POST /api/Auth/seed-roles`
 
 ------------------------------------------------------------------------
 
-## 🌐 API Endpoints (Examples)
+## 🛂 Admin Endpoints
 
-### Authentication
+### Get all users
 
-``` http
-POST /api/auth/login
-POST /api/auth/register
+`GET /api/Admin/users`
+
+### Assign role to user
+
+`POST /api/Admin/users/{userId}/roles/{roleName}`
+
+### Remove role from user
+
+`DELETE /api/Admin/users/{userId}/roles/{roleName}`
+
+### Create admin
+
+`POST /api/Admin/create-admin`
+
+### Create teacher
+
+`POST /api/Admin/create-teacher`
+
+### Create student
+
+`POST /api/Admin/create-student`
+
+------------------------------------------------------------------------
+
+## 📝 Assignment Endpoints
+
+### Create
+
+`POST /api/Assignments`
+
+### Get all
+
+`GET /api/Assignments`
+
+### Get by id
+
+`GET /api/Assignments/{id}`
+
+### Update
+
+`PUT /api/Assignments/{id}`
+
+### Delete
+
+`DELETE /api/Assignments/{id}`
+
+------------------------------------------------------------------------
+
+## 📤 Submission Endpoints
+
+### Submit assignment
+
+`POST /api/Submissions`
+
+### Get submission by id
+
+`GET /api/Submissions/{id}`
+
+### Get submissions for assignment
+
+`GET /api/Submissions/assignment/{assignmentId}`
+
+### Grade submission
+
+`PUT /api/Submissions/{id}/grade`
+
+### Get my submissions
+
+`GET /api/Submissions/mine`
+
+### Download file
+
+`GET /api/Submissions/{id}/download`
+
+------------------------------------------------------------------------
+
+# ⚙️ Local Development Setup
+
+## 1️⃣ Clone repos
+
+``` bash
+git clone https://github.com/ReactRay/assignment-manager-Client
+git clone https://github.com/ReactRay/assignment-manager-API
 ```
 
-### Assignments
+------------------------------------------------------------------------
 
-``` http
-GET /api/assignments
-POST /api/assignments
-GET /api/assignments/{id}
+## 2️⃣ Backend Setup
+
+``` bash
+cd assignment-manager-API
+dotnet restore
 ```
 
-### Submissions
+### Edit `appsettings.json`:
 
-``` http
-POST /api/submissions
-GET /api/submissions/by-assignment/{assignmentId}
+``` json
+"DefaultConnection": "Server=YOUR_SERVER;Database=AssignmentManagerDB;Trusted_Connection=True;TrustServerCertificate=True"
+```
+
+### Apply migrations:
+
+``` bash
+dotnet ef database update
+```
+
+### Run API:
+
+``` bash
+dotnet run
 ```
 
 ------------------------------------------------------------------------
 
-## 📁 Project Structure
+## 3️⃣ Frontend Setup
 
-### Frontend
+``` bash
+cd assignment-manager-Client
+npm install
+```
 
-    src/
-     ├─ pages/
-     ├─ components/
-     ├─ api/axiosClient.js
-     ├─ utils/
-     └─ styles/
 
-### Backend
+### Start:
 
-    Controllers/
-    Models/
-    DTOs/
-    Repositories/
-    Services/
-    Migrations/
-    Permissions/
+``` bash
+npm run dev
+```
 
 ------------------------------------------------------------------------
 
-## 🚀 Deployment Notes
-
-### Frontend (Vercel)
-
--   Vite bundler
--   Axios interceptors
--   Auto-redirect based on user role
-
-### Backend (Azure)
-
--   Published via Visual Studio
--   Azure SQL Database
--   CORS configured for Vercel
--   ASP.NET Identity + JWT configured
-
-------------------------------------------------------------------------
-
-## 📘 System Guide
-
-Available at `/guide` inside the deployed app.
-
-------------------------------------------------------------------------
-
-## 👨‍💻 Author
+# 👨‍💻 Author
 
 **Radwan Mansur**\
-Fullstack Developer (React • .NET • SQL)
-
--   Portfolio: https://www.radwan-mansur.com\
--   GitHub: https://github.com/ReactRay\
--   LinkedIn: https://www.linkedin.com/in/radwan-mansur-1368b7232/\
--   Email: raydiaz1899@gmail.com
+Portfolio: https://www.radwan-mansur.com\
+GitHub: https://github.com/ReactRay\
+LinkedIn: https://www.linkedin.com/in/radwan-mansur-1368b7232/\
+Email: raydiaz1899@gmail.com
 
 ------------------------------------------------------------------------
 
 ## ⭐ Support
 
-
+If you like this project, please ⭐ the repos!
