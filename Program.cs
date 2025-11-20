@@ -128,16 +128,15 @@ builder.Services.AddCors(options =>
         {
             policy
                 .WithOrigins(
-                    "http://localhost:5173",   // local dev
-                    "https://assignment-manager-client-j9x3.vercel.app", // main prod
-                    "https://assignment-manager-client-j9x3-git-main-reactrays-projects.vercel.app" // preview builds
+                    "http://localhost:5173",
+                    "https://assignment-manager-client-j9x3.vercel.app",
+                    "https://*.vercel.app"
                 )
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
         });
 });
-
 
 
 var app = builder.Build();
