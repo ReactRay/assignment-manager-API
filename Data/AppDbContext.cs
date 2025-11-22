@@ -20,21 +20,21 @@ namespace StudentTeacherManagment.Data
         {
             base.OnModelCreating(builder);
 
-            // Assignment → Teacher 
+            // Assignment --> Teacher 
             builder.Entity<Assignment>()
                 .HasOne(a => a.Teacher)
                 .WithMany(u => u.CreatedAssignments)
                 .HasForeignKey(a => a.TeacherId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Submission → Student 
+            // Submission -->Student 
             builder.Entity<Submission>()
                 .HasOne(s => s.Student)
                 .WithMany(u => u.Submissions)
                 .HasForeignKey(s => s.StudentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Submission → Assignment 
+            // Submission==> Assignment 
             builder.Entity<Submission>()
                 .HasOne(s => s.Assignment)
                 .WithMany(a => a.Submissions)

@@ -12,7 +12,6 @@
                     AppPermissions.Assignments.Update,
                     AppPermissions.Assignments.Delete,
                     AppPermissions.Assignments.Grade,
-
                     AppPermissions.Submissions.Read,
                     AppPermissions.Submissions.Download,
                     AppPermissions.Submissions.Grade
@@ -32,7 +31,6 @@
                     AppPermissions.Assignments.Update,
                     AppPermissions.Assignments.Delete,
                     AppPermissions.Assignments.Grade,
-
                     AppPermissions.Submissions.Create,
                     AppPermissions.Submissions.Read,
                     AppPermissions.Submissions.Download,
