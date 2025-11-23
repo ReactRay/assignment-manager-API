@@ -20,7 +20,7 @@ namespace StudentTeacherManagment.Repositories.AssignmentRepository
             return assignment;
         }
 
-        // ⚠️ Basic fetch: do NOT load submissions here (only for students)
+        //for student  does not load submissions here (only for students)
         public async Task<Assignment?> GetByIdAsync(Guid id)
         {
             return await _context.Assignments
@@ -28,7 +28,7 @@ namespace StudentTeacherManagment.Repositories.AssignmentRepository
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 
-        // ✔️ For Teacher/Admin we must load submissions + student names
+        // for teacher/admin we must load submissions + student names
         public async Task<Assignment?> GetFullByIdAsync(Guid id)
         {
             return await _context.Assignments
@@ -38,7 +38,7 @@ namespace StudentTeacherManagment.Repositories.AssignmentRepository
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 
-        // ✔️ Load submissions for ALL assignments
+        // load submissions for all assignments
         public async Task<IEnumerable<Assignment>> GetAllAsync()
         {
             return await _context.Assignments
@@ -48,7 +48,7 @@ namespace StudentTeacherManagment.Repositories.AssignmentRepository
                 .ToListAsync();
         }
 
-        // ✔️ Teachers only see their assignments (with submissions)
+        // Teachers only see their assignments (with submissions)
         public async Task<IEnumerable<Assignment>> GetByTeacherIdAsync(string teacherId)
         {
             return await _context.Assignments
