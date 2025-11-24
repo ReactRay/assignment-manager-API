@@ -76,8 +76,8 @@ https://assignment-manager-client-j9x3.vercel.app/
 - Vercel (Frontend)
 - Azure App Service (Backend)
 - Azure SQL Database
-- ### 🛠️ CI/CD
-GitHub Actions pipeline automatically builds & deploys the API to Azure on every push to `main`.
+- CI/CD GitHub Actions pipeline automatically builds & deploys the API to Azure on every push to `main`.
+
 
 
 ---
