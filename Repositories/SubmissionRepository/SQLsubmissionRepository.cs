@@ -25,7 +25,7 @@ namespace StudentTeacherManagment.Repositories.SubmissionRepository
             return await _context.Submissions
                 .Where(s => s.AssignmentId == assignmentId)
                 .Include(s => s.Student)
-                .Include(s => s.Assignment)   // 🔥 THIS FIXES EVERYTHING
+                .Include(s => s.Assignment)   // quick fix hre
                 .ToListAsync();
         }
 
