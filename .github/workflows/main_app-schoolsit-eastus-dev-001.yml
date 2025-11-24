@@ -62,4 +62,7 @@ jobs:
           app-name: 'app-schoolsit-eastus-dev-001'
           slot-name: 'Production'
           package: .
-          
+
+      # 🔥 Warmup Step — Add this
+      - name: Warm up API
+        run: curl -I https://app-schoolsit-eastus-dev-001-e3bgeqbjfqdqhnbv.canadacentral-01.azurewebsites.net/api/health
