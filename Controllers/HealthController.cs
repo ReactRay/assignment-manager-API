@@ -13,5 +13,8 @@ namespace StudentTeacherManagment.Controllers
         [HttpGet]
         public IActionResult Get() => Ok("Healthy");
 
+        [HttpHead]
+        public IActionResult Head() => Ok();
+
     }
 }
