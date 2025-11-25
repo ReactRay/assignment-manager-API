@@ -18,7 +18,7 @@ https://assignment-manager-client-j9x3.vercel.app/
 
 ## 📂 Repositories
 
-- Frontend: https://github.com/ReactRay/assignment-manager-Client\
+- Frontend: https://github.com/ReactRay/assignment-manager-Client
 - Backend: https://github.com/ReactRay/assignment-manager-API
 
 ---
