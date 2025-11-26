@@ -70,7 +70,7 @@ namespace StudentTeacherManagment.Controllers
             return Ok(_mapper.Map<IEnumerable<SubmissionResponseDto>>(subs));
         }
         [HttpGet("{id}/download")]
-        [Authorize]
+        [HasPermission(AppPermissions.Submissions.Download)]
         public async Task<IActionResult> Download(Guid id)
         {
             var userId = GetUserId();
