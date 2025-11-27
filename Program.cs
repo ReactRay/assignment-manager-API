@@ -128,6 +128,7 @@ builder.Services.AddCors(options =>
             policy
                 .WithOrigins(
                     "http://localhost:5173",
+                    "http://localhost:5174",
                     "https://assignment-manager-client-j9x3.vercel.app",
                     "https://*.vercel.app"
                 )
