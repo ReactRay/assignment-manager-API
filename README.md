@@ -241,9 +241,9 @@ npm run dev
 # 👨‍💻 Author
 
 **Radwan Mansur**\
-Portfolio: https://www.radwan-mansur.com\
-GitHub: https://github.com/ReactRay\
-LinkedIn: https://www.linkedin.com/in/radwan-mansur-1368b7232/\
+Portfolio: https://www.radwan-mansur.com
+GitHub: https://github.com/ReactRay
+LinkedIn: https://www.linkedin.com/in/radwan-mansur-1368b7232/
 Email: raydiaz1899@gmail.com
 
 ---
