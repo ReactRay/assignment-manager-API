@@ -48,7 +48,7 @@ namespace StudentTeacherManagment.Repositories.AssignmentRepository
                 .ToListAsync();
         }
 
-        // Teachers only see their assignments (with submissions)
+        // teachers only see their assignments , with the submissions
         public async Task<IEnumerable<Assignment>> GetByTeacherIdAsync(string teacherId)
         {
             return await _context.Assignments

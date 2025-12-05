@@ -16,12 +16,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Controllers
+
 
 builder.Services.AddControllers();
 
 
-// Swagger + JWT auth
+// swagger and auth for swagger /jwt for swagger
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -56,18 +56,18 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
-// DbContext
+//db context
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
-// Identity
+// identity setup
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-// Authorization Policies (Permissions)
+// auth policies /permissions
 builder.Services.AddAuthorization(options =>
 {
     foreach (var rolePermList in RolePermissions.PermissionsByRole.Values)
@@ -80,7 +80,7 @@ builder.Services.AddAuthorization(options =>
     }
 });
 
-// JWT Authentication
+// jwt
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 
 builder.Services.AddAuthentication(options =>
@@ -103,11 +103,11 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// AutoMapper
+// mapper
 builder.Services.AddAutoMapper(typeof(Program));
 
 
-// Repositories / Services
+// repo and serveces
 
 builder.Services.AddScoped<IAssignmentRepository, SQLAssignmentRepository>();
 builder.Services.AddScoped<ISubmissionRepository, SQLsubmissionRepository>();
@@ -161,7 +161,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 
-// Seed dummy data
+// seed
 
 using (var scope = app.Services.CreateScope())
 {
@@ -229,15 +229,15 @@ using (var scope = app.Services.CreateScope())
     }
 
 
-    // Admin
+    // admin
     await CreateUserIfNotExists("admin@test.com", "Admin123!", "System Admin", "Admin");
 
-    // Teachers
+    // teachers
     await CreateUserIfNotExists("teacher1@test.com", "123Asd!", "Teacher One", "Teacher");
     await CreateUserIfNotExists("teacher2@test.com", "123Asd!", "Teacher Two", "Teacher");
     await CreateUserIfNotExists("teacher3@test.com", "123Asd!", "Teacher Three", "Teacher");
 
-    // Students
+    //students
     await CreateUserIfNotExists("student1@test.com", "123Asd!", "Student One", "Student");
     await CreateUserIfNotExists("student2@test.com", "123Asd!", "Student Two", "Student");
     await CreateUserIfNotExists("student3@test.com", "123Asd!", "Student Three", "Student");
