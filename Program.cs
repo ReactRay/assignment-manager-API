@@ -13,6 +13,8 @@ using StudentTeacherManagment.Services.AssignmentHelpers;
 using StudentTeacherManagment.Services.Token;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Cors.Infrastructure;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -129,14 +131,18 @@ builder.Services.AddCors(options =>
                 .WithOrigins(
                     "http://localhost:5173",
                     "http://localhost:5174",
-                    "https://assignment-manager-client-j9x3.vercel.app",
-                    "https://*.vercel.app"
+                    "https://assignment-manager-client-j9x3.vercel.app"
                 )
                 .AllowAnyHeader()
                 .AllowAnyMethod()
-                .AllowCredentials();
+                .AllowCredentials()
+                .WithExposedHeaders("Content-Disposition");
+
+            
+
         });
 });
+
 
 
 var app = builder.Build();
@@ -206,8 +212,8 @@ using (var scope = app.Services.CreateScope())
     }
 
   
-    async Task<ApplicationUser?> CreateUserIfNotExists(
-        string email, string password, string fullName, string role)
+    async Task<ApplicationUser?> CreateUserIfNotExists(string email, string password,
+        string fullName, string role)
     {
         var existing = await userManager.FindByEmailAsync(email);
         if (existing != null)

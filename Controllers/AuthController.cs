@@ -74,22 +74,5 @@ namespace StudentTeacherManagment.Controllers
             });
         }
 
-    
-        //stam , bonus for me
-        [HttpPost("seed-roles")]
-        public async Task<IActionResult> SeedRoles()
-        {
-            string[] roles = { "Teacher", "Student" };
-
-            foreach (var role in roles)
-            {
-                if (!await _roleManager.RoleExistsAsync(role))
-                {
-                    await _roleManager.CreateAsync(new IdentityRole(role));
-                }
-            }
-
-            return Ok("Roles created successfully");
-        }
     }
 }
